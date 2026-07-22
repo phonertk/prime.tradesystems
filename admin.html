@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IT Solution Admin Dashboard - ระบบจัดการข้อมูล</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #111827;
+            --accent-color: #06b6d4;
+            --text-main: #f9fafb;
+            --border-color: #1f2937;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Kanit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .admin-card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 35px;
+            width: 100%;
+            max-width: 700px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        /* Modal ล็อกอินผ่าน PIN/Password */
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(11, 15, 25, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+        }
+
+        .login-box {
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+        }
+
+        .login-box h3 {
+            color: var(--accent-color);
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+        }
+
+        .login-box p {
+            color: #9ca3af;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+
+        .login-box input {
+            width: 100%;
+            padding: 14px;
+            border-radius: 8px;
+            border: 1px solid #374151;
+            background-color: #1f2937;
+            color: #fff;
+            font-size: 1.1rem;
+            text-align: center;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+        }
+
+        .login-box button {
+            background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            font-size: 1rem;
+        }
+
+        .error-msg {
+            color: #ef4444;
+            font-size: 0.85rem;
+            margin-top: 10px;
+            display: none;
+        }
+
+        /* Dashboard Main Layout */
+        .dashboard-content {
+            display: none; /* ซ่อนไว้จนกว่าจะใส่ รหัสผ่าน ถูกต้อง */
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+
+        h2 { color: var(--accent-color); font-size: 1.5rem; }
+
+        .back-link {
+            color: #9ca3af;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover { color: var(--accent-color); }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #9ca3af;
+            font-size: 0.9rem;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #374151;
+            background-color: #1f2937;
+            color: #fff;
+            font-size: 0.95rem;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        .section-header {
+            margin: 25px 0 15px;
+            padding-top: 15px;
+            border-top: 1px dashed var(--border-color);
+            color: #38bdf8;
+            font-weight: 500;
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+            color: #fff;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            font-size: 1rem;
+            margin-top: 10px;
+        }
+
+        .btn-save:hover { opacity: 0.9; }
+
+        .status-msg {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.95rem;
+            color: #4ade80;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 🔒 หน้าต่างยืนยันรหัสผ่านเข้า Admin -->
+    <div class="login-overlay" id="login-overlay">
+        <div class="login-box">
+            <h3>🔒 Admin Verification</h3>
+            <p>กรุณากรอกรหัสผ่านเพื่อเข้าสู่ระบบจัดการหลังบ้าน</p>
+            <form id="passcode-form">
+                <input type="password" id="passcode-input" placeholder="กรอกรหัสผ่าน..." required autofocus>
+                <button type="submit">ยืนยันตัวตน</button>
+            </form>
+            <div class="error-msg" id="login-error">❌ รหัสผ่านไม่ถูกต้อง! กรุณาลองใหม่อีกครั้ง</div>
+        </div>
+    </div>
+
+    <!-- ⚙️ เนื้อหาหน้า Dashboard (แสดงผลเมื่อกรอกรหัสถูกต้อง) -->
+    <div class="admin-card dashboard-content" id="dashboard-content">
+        <div class="header">
+            <h2>⚙️ IT Solution Admin Dashboard</h2>
+            <a href="index.html" class="back-link">← ออกจากระบบ / ดูหน้าเว็บ</a>
+        </div>
+
+        <form id="settings-form">
+            <div class="form-group">
+                <label for="company-name">ชื่อบริษัท / แบรนด์</label>
+                <input type="text" id="company-name" value="NEXUS IT SOLUTIONS">
+            </div>
+
+            <div class="form-group">
+                <label for="hero-title">พาดหัวหลัก (Hero Title)</label>
+                <input type="text" id="hero-title" value="ยกระดับธุรกิจของคุณด้วย โครงสร้างพื้นฐานไอที ครบวงจร">
+            </div>
+
+            <div class="form-group">
+                <label for="hero-subtitle">ข้อความบรรยายหลัก (Hero Subtitle)</label>
+                <textarea id="hero-subtitle" rows="2">เราให้บริการออกแบบ ระบบคลาวด์, ความปลอดภัยไซเบอร์ (Cybersecurity), และ พัฒนาซอฟต์แวร์เฉพาะองค์กร</textarea>
+            </div>
+
+            <div class="section-header">🛠️ ปรับแต่งบริการไอที (Service 1)</div>
+            <div class="form-group">
+                <label for="s1-title">ชื่อบริการ 1</label>
+                <input type="text" id="s1-title" value="Cloud Infrastructure">
+            </div>
+            <div class="form-group">
+                <label for="s1-desc">รายละเอียดบริการ 1</label>
+                <input type="text" id="s1-desc" value="บริการออกแบบ ย้าย และดูแลระบบ Cloud (AWS, Azure, Google Cloud)">
+            </div>
+
+            <div class="section-header">📞 ข้อมูลการติดต่อ</div>
+            <div class="form-group">
+                <label for="contact-info">อีเมล / เบอร์โทรศัพท์</label>
+                <input type="text" id="contact-info" value="📧 Contact: contact@nexus-itsolutions.com | 📞 Tel: 02-123-4567">
+            </div>
+
+            <button type="submit" class="btn-save">💾 บันทึกและอัปเดตข้อมูลหน้าบ้าน</button>
+        </form>
+
+        <div class="status-msg" id="status-msg"></div>
+    </div>
+
+    <script>
+        // ----------------------------------------------------
+        // 🔑 1. กำหนดรหัสผ่านเข้า Admin (เปลี่ยนตามต้องการได้ตรงนี้)
+        // ----------------------------------------------------
+        const ADMIN_PASSCODE = '123456'; 
+
+        // ตรวจสอบการผ่านรหัสเข้าใช้งาน
+        document.getElementById('passcode-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const inputPass = document.getElementById('passcode-input').value;
+            const errorDiv = document.getElementById('login-error');
+
+            if (inputPass === ADMIN_PASSCODE) {
+                document.getElementById('login-overlay').style.display = 'none';
+                document.getElementById('dashboard-content').style.display = 'block';
+            } else {
+                errorDiv.style.display = 'block';
+                document.getElementById('passcode-input').value = '';
+            }
+        });
+
+        // ----------------------------------------------------
+        // 🔑 2. ตั้งค่า Supabase Credentials
+        // ----------------------------------------------------
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+
+        document.getElementById('settings-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const statusDiv = document.getElementById('status-msg');
+            statusDiv.innerText = "กำลังบันทึกข้อมูล...";
+
+            const fields = ['company-name', 'hero-title', 'hero-subtitle', 's1-title', 's1-desc', 'contact-info'];
+            const updates = fields.map(id => ({
+                key: id,
+                value: document.getElementById(id).value
+            }));
+
+            if (SUPABASE_URL !== 'YOUR_SUPABASE_URL') {
+                const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                await supabase.from('site_settings').upsert(updates, { onConflict: 'key' });
+                statusDiv.innerText = "✅ อัปเดตข้อมูลหน้าเว็บ IT Solution เรียบร้อยแล้ว!";
+            } else {
+                setTimeout(() => {
+                    statusDiv.innerText = "💡 (โหมดตัวอย่าง) บันทึกสำเร็จ! หากเชื่อมต่อ Supabase แล้ว ข้อมูลจะอัปเดตไปหน้าบ้านทันที";
+                }, 500);
+            }
+        });
+    </script>
+</body>
+</html>
