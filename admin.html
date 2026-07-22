@@ -3,54 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IT Solution Admin Dashboard - ระบบจัดการข้อมูล</title>
+    <title>CyberPulse - Central Control Panel</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #0b0f19;
-            --card-bg: #111827;
-            --accent-color: #06b6d4;
-            --text-main: #f9fafb;
-            --border-color: #1f2937;
+            --bg-dark: #080b11;
+            --bg-card: #0f172a;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #1e293b;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Kanit', sans-serif;
+            font-family: 'Plus Jakarta Sans', sans-serif;
         }
 
         body {
-            background-color: var(--bg-color);
+            background-color: var(--bg-dark);
             color: var(--text-main);
             padding: 40px 20px;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            background-image: radial-gradient(circle at 50% 10%, rgba(6, 182, 212, 0.1) 0%, transparent 50%);
         }
 
-        .admin-card {
-            background-color: var(--card-bg);
-            border-radius: 16px;
-            padding: 35px;
-            width: 100%;
-            max-width: 700px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-
-        /* Modal ล็อกอินผ่าน PIN/Password */
+        /* Modal ล็อกอิน PIN/Passcode */
         .login-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(11, 15, 25, 0.95);
-            backdrop-filter: blur(10px);
+            background: rgba(8, 11, 17, 0.95);
+            backdrop-filter: blur(12px);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -58,48 +51,48 @@
         }
 
         .login-box {
-            background: var(--card-bg);
+            background: var(--bg-card);
             padding: 40px;
-            border-radius: 16px;
-            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            border: 1px solid var(--border);
             text-align: center;
             max-width: 400px;
             width: 90%;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
         }
 
         .login-box h3 {
-            color: var(--accent-color);
-            margin-bottom: 10px;
+            color: var(--accent-cyan);
+            margin-bottom: 8px;
             font-size: 1.5rem;
         }
 
         .login-box p {
-            color: #9ca3af;
+            color: var(--text-muted);
             font-size: 0.9rem;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
         }
 
         .login-box input {
             width: 100%;
             padding: 14px;
-            border-radius: 8px;
-            border: 1px solid #374151;
-            background-color: #1f2937;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background-color: #020617;
             color: #fff;
             font-size: 1.1rem;
             text-align: center;
-            letter-spacing: 2px;
+            letter-spacing: 3px;
             margin-bottom: 20px;
         }
 
         .login-box button {
-            background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
             color: #fff;
             border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-weight: 600;
+            padding: 14px;
+            border-radius: 10px;
+            font-weight: 700;
             cursor: pointer;
             width: 100%;
             font-size: 1rem;
@@ -108,33 +101,60 @@
         .error-msg {
             color: #ef4444;
             font-size: 0.85rem;
-            margin-top: 10px;
+            margin-top: 12px;
             display: none;
         }
 
-        /* Dashboard Main Layout */
+        /* Main Dashboard Content */
         .dashboard-content {
-            display: none; /* ซ่อนไว้จนกว่าจะใส่ รหัสผ่าน ถูกต้อง */
+            display: none; /* เปิดเมื่อยืนยันรหัสถูกต้อง */
+            width: 100%;
+            max-width: 850px;
+        }
+
+        .admin-card {
+            background-color: var(--bg-card);
+            border-radius: 24px;
+            padding: 40px;
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
         }
 
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 25px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 15px;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 20px;
         }
 
-        h2 { color: var(--accent-color); font-size: 1.5rem; }
+        h2 { font-size: 1.6rem; color: #fff; }
 
         .back-link {
-            color: #9ca3af;
+            color: var(--text-muted);
             text-decoration: none;
             font-size: 0.9rem;
+            font-weight: 500;
         }
 
-        .back-link:hover { color: var(--accent-color); }
+        .back-link:hover { color: var(--accent-cyan); }
+
+        .section-title {
+            color: var(--accent-cyan);
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin: 30px 0 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
 
         .form-group {
             margin-bottom: 20px;
@@ -143,44 +163,38 @@
         label {
             display: block;
             margin-bottom: 8px;
-            color: #9ca3af;
-            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            font-weight: 500;
         }
 
         input, textarea {
             width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid #374151;
-            background-color: #1f2937;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background-color: #020617;
             color: #fff;
             font-size: 0.95rem;
         }
 
         input:focus, textarea:focus {
             outline: none;
-            border-color: var(--accent-color);
-        }
-
-        .section-header {
-            margin: 25px 0 15px;
-            padding-top: 15px;
-            border-top: 1px dashed var(--border-color);
-            color: #38bdf8;
-            font-weight: 500;
+            border-color: var(--accent-cyan);
         }
 
         .btn-save {
-            background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
             color: #fff;
             border: none;
-            padding: 14px 24px;
-            border-radius: 8px;
-            font-weight: 600;
+            padding: 16px 28px;
+            border-radius: 12px;
+            font-weight: 700;
             cursor: pointer;
             width: 100%;
-            font-size: 1rem;
-            margin-top: 10px;
+            font-size: 1.05rem;
+            margin-top: 20px;
+            box-shadow: 0 4px 20px rgba(6, 182, 212, 0.3);
         }
 
         .btn-save:hover { opacity: 0.9; }
@@ -190,67 +204,99 @@
             text-align: center;
             font-size: 0.95rem;
             color: #4ade80;
+            font-weight: 600;
         }
     </style>
 </head>
 <body>
 
-    <!-- 🔒 หน้าต่างยืนยันรหัสผ่านเข้า Admin -->
+    <!-- 🔒 POPUP ยืนยันรหัสผ่านเข้า Admin -->
     <div class="login-overlay" id="login-overlay">
         <div class="login-box">
-            <h3>🔒 Admin Verification</h3>
-            <p>กรุณากรอกรหัสผ่านเพื่อเข้าสู่ระบบจัดการหลังบ้าน</p>
+            <h3>🔒 CyberPulse Central Control</h3>
+            <p>กรุณากรอกรหัสผ่านเพื่อเข้าสู่ระบบปรับแต่งหน้าเว็บ</p>
             <form id="passcode-form">
                 <input type="password" id="passcode-input" placeholder="กรอกรหัสผ่าน..." required autofocus>
-                <button type="submit">ยืนยันตัวตน</button>
+                <button type="submit">Unlock Dashboard</button>
             </form>
             <div class="error-msg" id="login-error">❌ รหัสผ่านไม่ถูกต้อง! กรุณาลองใหม่อีกครั้ง</div>
         </div>
     </div>
 
-    <!-- ⚙️ เนื้อหาหน้า Dashboard (แสดงผลเมื่อกรอกรหัสถูกต้อง) -->
-    <div class="admin-card dashboard-content" id="dashboard-content">
-        <div class="header">
-            <h2>⚙️ IT Solution Admin Dashboard</h2>
-            <a href="index.html" class="back-link">← ออกจากระบบ / ดูหน้าเว็บ</a>
+    <!-- ⚙️ หน้าหลังบ้าน จัดการข้อมูลแบบละเอียด -->
+    <div class="dashboard-content" id="dashboard-content">
+        <div class="admin-card">
+            <div class="header">
+                <h2>⚡ CyberPulse Control Center</h2>
+                <a href="index.html" class="back-link">← ออกจากระบบ / กลับหน้าเว็บ</a>
+            </div>
+
+            <form id="settings-form">
+                <div class="section-title">🌐 Brand & Hero Banner Settings</div>
+                <div class="form-group">
+                    <label for="company_name">ชื่อแบรนด์ / บริษัท</label>
+                    <input type="text" id="company_name" value="CYBERPULSE">
+                </div>
+
+                <div class="form-group">
+                    <label for="hero_badge">ข้อความ Badge หัวข้อ</label>
+                    <input type="text" id="hero_badge" value="✨ NEXT-GEN IT INFRASTRUCTURE">
+                </div>
+
+                <div class="form-group">
+                    <label for="hero_title">พาดหัวหลัก (Hero Title - รองรับ <span> ซ่อนคำไฮไลท์)</label>
+                    <input type="text" id="hero_title" value="Empowering Enterprises with Smart Technology Solutions">
+                </div>
+
+                <div class="form-group">
+                    <label for="hero_subtitle">คำบรรยายหลัก (Hero Subtitle)</label>
+                    <textarea id="hero_subtitle" rows="3">We deliver high-performance Cloud Systems, Next-Gen Cybersecurity, and AI-Driven Custom Software tailored to accelerate your business growth.</textarea>
+                </div>
+
+                <div class="section-title">📊 Stats Dashboard Counters</div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="stat1_val">Stat 1 Value</label>
+                        <input type="text" id="stat1_val" value="99.99%">
+                    </div>
+                    <div class="form-group">
+                        <label for="stat1_lbl">Stat 1 Label</label>
+                        <input type="text" id="stat1_lbl" value="Uptime SLA Guaranteed">
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="stat2_val">Stat 2 Value</label>
+                        <input type="text" id="stat2_val" value="500+">
+                    </div>
+                    <div class="form-group">
+                        <label for="stat2_lbl">Stat 2 Label</label>
+                        <input type="text" id="stat2_lbl" value="Enterprise Clients">
+                    </div>
+                </div>
+
+                <div class="section-title">🛠️ Services Content</div>
+                <div class="form-group">
+                    <label for="s1_title">บริการ 1: หัวข้อ</label>
+                    <input type="text" id="s1_title" value="Cloud & DevOps Acceleration">
+                </div>
+                <div class="form-group">
+                    <label for="s1_desc">บริการ 1: รายละเอียด</label>
+                    <textarea id="s1_desc" rows="2">Migrate, scale, and optimize multi-cloud architectures with automated CI/CD pipelines and zero downtime.</textarea>
+                </div>
+
+                <div class="section-title">📞 Contact Footer</div>
+                <div class="form-group">
+                    <label for="contact_info">ข้อมูลติดต่อ (อีเมล & เบอร์โทร)</label>
+                    <input type="text" id="contact_info" value="📧 contact@cyberpulse-it.com | 📞 +66 2 123 4567">
+                </div>
+
+                <button type="submit" class="btn-save">💾 บันทึกและอัปเดตข้อมูล Real-time</button>
+            </form>
+
+            <div class="status-msg" id="status-msg"></div>
         </div>
-
-        <form id="settings-form">
-            <div class="form-group">
-                <label for="company-name">ชื่อบริษัท / แบรนด์</label>
-                <input type="text" id="company-name" value="NEXUS IT SOLUTIONS">
-            </div>
-
-            <div class="form-group">
-                <label for="hero-title">พาดหัวหลัก (Hero Title)</label>
-                <input type="text" id="hero-title" value="ยกระดับธุรกิจของคุณด้วย โครงสร้างพื้นฐานไอที ครบวงจร">
-            </div>
-
-            <div class="form-group">
-                <label for="hero-subtitle">ข้อความบรรยายหลัก (Hero Subtitle)</label>
-                <textarea id="hero-subtitle" rows="2">เราให้บริการออกแบบ ระบบคลาวด์, ความปลอดภัยไซเบอร์ (Cybersecurity), และ พัฒนาซอฟต์แวร์เฉพาะองค์กร</textarea>
-            </div>
-
-            <div class="section-header">🛠️ ปรับแต่งบริการไอที (Service 1)</div>
-            <div class="form-group">
-                <label for="s1-title">ชื่อบริการ 1</label>
-                <input type="text" id="s1-title" value="Cloud Infrastructure">
-            </div>
-            <div class="form-group">
-                <label for="s1-desc">รายละเอียดบริการ 1</label>
-                <input type="text" id="s1-desc" value="บริการออกแบบ ย้าย และดูแลระบบ Cloud (AWS, Azure, Google Cloud)">
-            </div>
-
-            <div class="section-header">📞 ข้อมูลการติดต่อ</div>
-            <div class="form-group">
-                <label for="contact-info">อีเมล / เบอร์โทรศัพท์</label>
-                <input type="text" id="contact-info" value="📧 Contact: contact@nexus-itsolutions.com | 📞 Tel: 02-123-4567">
-            </div>
-
-            <button type="submit" class="btn-save">💾 บันทึกและอัปเดตข้อมูลหน้าบ้าน</button>
-        </form>
-
-        <div class="status-msg" id="status-msg"></div>
     </div>
 
     <script>
@@ -259,7 +305,6 @@
         // ----------------------------------------------------
         const ADMIN_PASSCODE = '123456'; 
 
-        // ตรวจสอบการผ่านรหัสเข้าใช้งาน
         document.getElementById('passcode-form').addEventListener('submit', function(e) {
             e.preventDefault();
             const inputPass = document.getElementById('passcode-input').value;
@@ -283,9 +328,14 @@
         document.getElementById('settings-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             const statusDiv = document.getElementById('status-msg');
-            statusDiv.innerText = "กำลังบันทึกข้อมูล...";
+            statusDiv.innerText = "กำลังอัปเดตไปยัง Supabase...";
 
-            const fields = ['company-name', 'hero-title', 'hero-subtitle', 's1-title', 's1-desc', 'contact-info'];
+            const fields = [
+                'company_name', 'hero_badge', 'hero_title', 'hero_subtitle',
+                'stat1_val', 'stat1_lbl', 'stat2_val', 'stat2_lbl',
+                's1_title', 's1_desc', 'contact_info'
+            ];
+            
             const updates = fields.map(id => ({
                 key: id,
                 value: document.getElementById(id).value
@@ -294,10 +344,10 @@
             if (SUPABASE_URL !== 'YOUR_SUPABASE_URL') {
                 const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
                 await supabase.from('site_settings').upsert(updates, { onConflict: 'key' });
-                statusDiv.innerText = "✅ อัปเดตข้อมูลหน้าเว็บ IT Solution เรียบร้อยแล้ว!";
+                statusDiv.innerText = "✅ อัปเดตข้อมูลหน้าบ้านแบบ Real-time เรียบร้อยแล้ว!";
             } else {
                 setTimeout(() => {
-                    statusDiv.innerText = "💡 (โหมดตัวอย่าง) บันทึกสำเร็จ! หากเชื่อมต่อ Supabase แล้ว ข้อมูลจะอัปเดตไปหน้าบ้านทันที";
+                    statusDiv.innerText = "💡 (โหมดตัวอย่าง) บันทึกสำเร็จ! เมื่อเชื่อม Supabase แล้ว ข้อมูลจะเปลี่ยนไปหน้าบ้านทันที";
                 }, 500);
             }
         });
